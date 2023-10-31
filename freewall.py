@@ -72,18 +72,18 @@ def pass_paywall(url, check=False, link=False):
         if re.search(pattern, url):
             if check: return True
             img_link = downloader_func(url)
-            
+
             try: name = url.split("/")[idx]
             except: pass
             if (not img) and img_link:
-                fullname = name + "." + ftype
+                fullname = f"{name}.{ftype}"
                 with open(fullname,"wb") as f: f.write(img_link)
                 return fullname
             break
-    
+
     if check: return False
     if link or (not img_link): return img_link
-    fullname = name + "." + "png"
+    fullname = f"{name}.png"
     with open(fullname,"wb") as f: f.write(getImg(img_link))
     return fullname
 

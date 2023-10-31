@@ -33,25 +33,19 @@ def handleIndex(ele,message,msg):
 # loop thread
 def loopthread(message,otherss=False):
 
-    urls = []
-    if otherss: texts = message.caption
-    else: texts = message.text
-
+    texts = message.caption if otherss else message.text
     if texts in [None,""]: return
-    for ele in texts.split():
-        if "http://" in ele or "https://" in ele:
-            urls.append(ele)
-    if len(urls) == 0: return
+    urls = [ele for ele in texts.split() if "http://" in ele or "https://" in ele]
+    if not urls: return
 
     if bypasser.ispresent(bypasser.ddl.ddllist,urls[0]):
         msg = app.send_message(message.chat.id, "⚡ __generating...__", reply_to_message_id=message.id)
     elif freewall.pass_paywall(urls[0], check=True):
         msg = app.send_message(message.chat.id, "🕴️ __jumping the wall...__", reply_to_message_id=message.id)
+    elif "https://olamovies" in urls[0] or "https://psa.wf/" in urls[0]:
+        msg = app.send_message(message.chat.id, "⏳ __this might take some time...__", reply_to_message_id=message.id)
     else:
-        if "https://olamovies" in urls[0] or "https://psa.wf/" in urls[0]:
-            msg = app.send_message(message.chat.id, "⏳ __this might take some time...__", reply_to_message_id=message.id)
-        else:
-            msg = app.send_message(message.chat.id, "🔎 __bypassing...__", reply_to_message_id=message.id)
+        msg = app.send_message(message.chat.id, "🔎 __bypassing...__", reply_to_message_id=message.id)
 
     strt = time()
     links = ""
@@ -62,20 +56,22 @@ def loopthread(message,otherss=False):
             return
         elif bypasser.ispresent(bypasser.ddl.ddllist,ele):
             try: temp = bypasser.ddl.direct_link_generator(ele)
-            except Exception as e: temp = "**Error**: " + str(e)
+            except Exception as e:
+                temp = f"**Error**: {str(e)}"
         elif freewall.pass_paywall(ele, check=True):
-            freefile = freewall.pass_paywall(ele)
-            if freefile:
+            if freefile := freewall.pass_paywall(ele):
                 try: 
                     app.send_document(message.chat.id, freefile, reply_to_message_id=message.id)
                     remove(freefile)
                     app.delete_messages(message.chat.id,[msg.id])
                     return
                 except: pass
-            else: app.send_message(message.chat.id, "__Failed to Jump", reply_to_message_id=message.id)
+            else:
+                app.send_message(message.chat.id, "__Failed to Jump", reply_to_message_id=message.id)
         else:    
             try: temp = bypasser.shortners(ele)
-            except Exception as e: temp = "**Error**: " + str(e)
+            except Exception as e:
+                temp = f"**Error**: {str(e)}"
         print("bypassed:",temp)
         if temp != None: links = links + temp + "\n"
     end = time()

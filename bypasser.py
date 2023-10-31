@@ -60,11 +60,11 @@ def scrapeIndex(url, username="none", password="none"):
         user_pass = f"{username}:{password}"
         return f"Basic {base64.b64encode(user_pass.encode()).decode()}"
 
-          
+
     def decrypt(string): 
         return base64.b64decode(string[::-1][24:-20]).decode('utf-8')  
 
-    
+
     def func(payload_input, url, username, password): 
         next_page = False
         next_page_token = "" 
@@ -105,38 +105,37 @@ def scrapeIndex(url, username="none", password="none"):
         long_string = ''.join(result)
         new_list = []
 
-        while len(long_string) > 0:
+        while long_string != "":
             if len(long_string) > 4000:
                 split_index = long_string.rfind("\n\n", 0, 4000)
                 if split_index == -1:
                     split_index = 4000
             else:
                 split_index = len(long_string)
-                
+
             new_list.append(long_string[:split_index])
             long_string = long_string[split_index:].lstrip("\n\n")
-        
+
         return new_list
 
     # main
     x = 0
     next_page = False
-    next_page_token = "" 
+    next_page_token = ""
     result = []
 
-    payload = {"page_token":next_page_token, "page_index": x}	
+    payload = {"page_token":next_page_token, "page_index": x}
     print(f"Index Link: {url}\n")
     temp, next_page, next_page_token = func(payload, url, username, password)
     if temp is not None: result.append(temp)
-    
+
     while next_page == True:
         payload = {"page_token":next_page_token, "page_index": x}
         temp, next_page, next_page_token = func(payload, url, username, password)
         if temp is not None: result.append(temp)
         x += 1
-        
-    if len(result)==0: return None
-    return format(result)
+
+    return None if not result else format(result)
 
 
 ##############################################################
@@ -222,7 +221,7 @@ def psa_bypasser(psa_url):
             res = requests.get(li, headers=headers, cookies=cookies)
             soup = BeautifulSoup(res.text,"html.parser")
             name = soup.find("h1",class_="entry-title", itemprop="headline").getText()
-            finals += "**" + name + "**\n\n"
+            finals += f"**{name}" + "**\n\n"
             soup = soup.find("div", class_="entry-content" ,itemprop="text").findAll("a")
             for ele in soup: finals += "○ " + ele.get("href") + "\n"
             finals += "\n\n"
@@ -336,8 +335,7 @@ def igggames(url):
     soup = BeautifulSoup(res.text,"html.parser")
     soup = soup.find("div",class_="uk-margin-medium-top").findAll("a")
 
-    bluelist = []
-    for ele in soup: bluelist.append(ele.get('href'))
+    bluelist = [ele.get('href') for ele in soup]
     bluelist = bluelist[3:-1]
 
     links = ""
@@ -353,19 +351,19 @@ def igggames(url):
                 tt = tmp.split("/")[2]
                 if last is not None and tt != last: links += "\n"
                 last = tt
-            links = links + "○ " + tmp + "\n"
+            links = f"{links}○ {tmp}" + "\n"
         elif "pcgamestorrents.com" in ele:
             res = requests.get(ele)
             soup = BeautifulSoup(res.text,"html.parser")
             turl = soup.find("p",class_="uk-card uk-card-body uk-card-default uk-card-hover").find("a").get("href")
-            links = links + "🧲 `" + bypassBluemediafiles(turl,True) + "`\n\n"
+            links = f"{links}🧲 `{bypassBluemediafiles(turl, True)}" + "`\n\n"
         elif ele != "https://igg-games.com/how-to-install-a-pc-game-and-update.html":
             if fix:
                 tt = ele.split("/")[2]
                 if last is not None and tt != last: links += "\n"
                 last = tt
-            links = links + "○ " + ele + "\n"
-       
+            links = f"{links}○ {ele}" + "\n"
+
     return links[:-1]
 
 
@@ -405,7 +403,7 @@ def scrappers(link):
         soup = BeautifulSoup(res.text, 'html.parser')
         for br in soup.findAll('br'):
             next_s = br.nextSibling
-            if not (next_s and isinstance(next_s,NavigableString)):
+            if not next_s or not isinstance(next_s, NavigableString):
                 continue
             next2_s = next_s.nextSibling
             if next2_s and isinstance(next2_s,Tag) and next2_s.name == 'br':
@@ -416,10 +414,10 @@ def scrappers(link):
                   extra = re.sub(r'(?m)^\(https://e.*', ' ', star)
                   gd_txt += ', '.join(re.findall(r'(?m)^.*https://new1.gdtot.cfd/file/[0-9][^.]*', next_s)) + "\n\n"
         return gd_txt
-  
+
     elif "htpmovies" in link and "/exit.php" in link:
         return htpmovies(link)
-        
+
     elif "htpmovies" in link:
         prsd = ""
         links = []
@@ -432,12 +430,12 @@ def scrappers(link):
         for a in x:
             links.append(a['href'])
             prsd = f"Total Links Found : {len(links)}\n\n"
-      
+
         msdcnt = -1
         for b in y:
             if str(b.string).lower().startswith(z.lower()):
                 msdcnt += 1
-                url = f"https://htpmovies.lol"+links[msdcnt]
+                url = f"https://htpmovies.lol{links[msdcnt]}"
                 prsd += f"{msdcnt+1}. <b>{b.string}</b>\n{htpmovies(url)}\n\n"
                 asleep(5)
         return prsd
@@ -448,8 +446,7 @@ def scrappers(link):
         res = requests.get(link)
         soup = BeautifulSoup(res.text, 'html.parser')
         x = soup.select('a[href^="https://kolop.icu/file"]')
-        for a in x:
-            links.append(a['href'])
+        links.extend(a['href'] for a in x)
         for o in links:
             res = requests.get(o)
             soup = BeautifulSoup(res.content, "html.parser")
@@ -464,8 +461,7 @@ def scrappers(link):
         res = requests.get(link)
         soup = BeautifulSoup(res.text, 'html.parser')
         x = soup.select('a[href^="https://gdflix.top/file"]')
-        for a in x:
-            links.append(a['href'])
+        links.extend(a['href'] for a in x)
         for o in links:
             prsd += o + '\n\n'
         return prsd
@@ -484,7 +480,7 @@ def scrappers(link):
             gd_txt += f"{no}. <code>{(title[0]['content']).replace('Download ' , '')}</code>\n{gdlk}\n\n"
             asleep(1.5)
         return gd_txt
-    
+
     elif "taemovies" in link:
         gd_txt, no = "", 0
         r = requests.get(link)
@@ -499,7 +495,7 @@ def scrappers(link):
             no += 1
             gd_txt += f"{no}. {(title[0]['content']).replace('Download ' , '')}\n{glink}\n\n"
         return gd_txt
-    
+
     elif "toonworld4all" in link:
         gd_txt, no = "", 0
         r = requests.get(link)
@@ -516,7 +512,7 @@ def scrappers(link):
                 no += 1
                 gd_txt += f"{no}. {(title[0]['content']).replace('Download ' , '')}\n{glink}\n\n"
         return gd_txt
-    
+
     elif "animeremux" in link:
         gd_txt, no = "", 0
         r = requests.get(link)
@@ -552,10 +548,7 @@ def getfinal(domain, url, sess):
     res = sess.get(url)
     soup = BeautifulSoup(res.text,"html.parser")
     soup = soup.find("form").findAll("input")
-    datalist = []
-    for ele in soup:
-        datalist.append(ele.get("value"))
-
+    datalist = [ele.get("value") for ele in soup]
     data = {
             '_method': datalist[0],
             '_csrfToken': datalist[1],
@@ -580,9 +573,8 @@ def getfinal(domain, url, sess):
 
     # print("waiting 10 secs")
     time.sleep(10) # important
-    response = sess.post(domain+'/links/go', data=data).json()
-    furl = response["url"]
-    return furl
+    response = sess.post(f'{domain}/links/go', data=data).json()
+    return response["url"]
 
 
 def getfirst(url):
@@ -594,9 +586,7 @@ def getfirst(url):
     soup = soup.find("form")
     action = soup.get("action")
     soup = soup.findAll("input")
-    datalist = []
-    for ele in soup:
-        datalist.append(ele.get("value"))
+    datalist = [ele.get("value") for ele in soup]
     sess.headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
@@ -668,10 +658,7 @@ def olamovies(url):
     soup = BeautifulSoup(res.text,"html.parser")
     soup = soup.findAll("div", class_="wp-block-button")
 
-    outlist = []
-    for ele in soup:
-        outlist.append(ele.find("a").get("href"))
-
+    outlist = [ele.find("a").get("href") for ele in soup]
     slist = []
     for ele in outlist:
         try:
@@ -679,7 +666,7 @@ def olamovies(url):
             id = ele.split("&id=")[1]
         except:
             continue
-        
+
         count = 3
         params = { 'key': key, 'id': id}
         soup = "None"
@@ -688,13 +675,11 @@ def olamovies(url):
             res = client.get("https://olamovies.ink/download/", params=params, headers=headers)
             soup = BeautifulSoup(res.text,"html.parser")
             soup = soup.findAll("a")[0].get("href")
-            if soup != "":
-                if "try2link.com" in soup or 'rocklinks.net' in soup or "ez4short.com" in soup: slist.append(soup)
-                else: pass
-            else:
+            if soup == "":
                 if count == 0: break
                 else: count -= 1
-            
+
+            elif "try2link.com" in soup or 'rocklinks.net' in soup or "ez4short.com" in soup: slist.append(soup)
             time.sleep(10)
 
     final = []
@@ -705,9 +690,6 @@ def olamovies(url):
             final.append(try2link_bypass(ele))
         elif "ez4short.com" in ele:
             final.append(ez4(ele))
-        else:
-            pass
-
     links = ""
     for ele in final:
         links = links + ele + "\n"
@@ -718,10 +700,9 @@ def olamovies(url):
 # katdrive
 
 def parse_info_katdrive(res):
-    info_parsed = {}
     title = re.findall('>(.*?)<\/h4>', res.text)[0]
     info_chunks = re.findall('>(.*?)<\/td>', res.text)
-    info_parsed['title'] = title
+    info_parsed = {'title': title}
     for i in range(0, len(info_chunks), 2):
         info_parsed[info_chunks[i]] = info_chunks[i+1]
     return info_parsed
@@ -756,10 +737,9 @@ def katdrive_dl(url,katcrypt):
 # hubdrive
 
 def parse_info_hubdrive(res):
-    info_parsed = {}
     title = re.findall('>(.*?)<\/h4>', res.text)[0]
     info_chunks = re.findall('>(.*?)<\/td>', res.text)
-    info_parsed['title'] = title
+    info_parsed = {'title': title}
     for i in range(0, len(info_chunks), 2):
         info_parsed[info_chunks[i]] = info_chunks[i+1]
     return info_parsed
@@ -794,10 +774,9 @@ def hubdrive_dl(url,hcrypt):
 # drivefire
 
 def parse_info_drivefire(res):
-    info_parsed = {}
     title = re.findall('>(.*?)<\/h4>', res.text)[0]
     info_chunks = re.findall('>(.*?)<\/td>', res.text)
-    info_parsed['title'] = title
+    info_parsed = {'title': title}
     for i in range(0, len(info_chunks), 2):
         info_parsed[info_chunks[i]] = info_chunks[i+1]
     return info_parsed
@@ -831,10 +810,9 @@ def drivefire_dl(url,dcrypt):
 # kolop
 
 def parse_info_kolop(res):
-    info_parsed = {}
     title = re.findall('>(.*?)<\/h4>', res.text)[0]
     info_chunks = re.findall('>(.*?)<\/td>', res.text)
-    info_parsed['title'] = title
+    info_parsed = {'title': title}
     for i in range(0, len(info_chunks), 2):
         info_parsed[info_chunks[i]] = info_chunks[i+1]
     return info_parsed
@@ -875,8 +853,7 @@ def mediafire(url):
     contents = res.text
 
     for line in contents.splitlines():
-        m = re.search(r'href="((http|https)://download[^"]+)', line)
-        if m:
+        if m := re.search(r'href="((http|https)://download[^"]+)', line):
             return m.groups()[0]
 
 
@@ -890,8 +867,7 @@ def zippyshare(url):
     val = str(int(parts[0]) % int(parts[2]) + int(parts[4]) % int(parts[6]))
     surl = surl.split('"')
     burl = url.split("zippyshare.com")[0]
-    furl = burl + "zippyshare.com" + surl[1] + val + surl[-2]
-    return furl
+    return f"{burl}zippyshare.com{surl[1]}{val}{surl[-2]}"
 
 
 ####################################################
@@ -1083,7 +1059,6 @@ def anonfile(url):
 def pixl(url):
     count = 1
     dl_msg = ""
-    currentpage = 1
     settotalimgs = True
     totalimages = ""
     client = cloudscraper.create_scraper(allow_brotli=False)
@@ -1102,7 +1077,7 @@ def pixl(url):
         url = None
     for ref in thmbnailanch:
         imgdata = client.get(ref.attrs["href"])
-        if not imgdata.status_code == 200:
+        if imgdata.status_code != 200:
             time.sleep(5)
             continue
         imghtml = BeautifulSoup(imgdata.text, "html.parser")
@@ -1111,11 +1086,10 @@ def pixl(url):
         currentimg = currentimg.replace(" ", "%20")
         dl_msg += f"{count}. {currentimg}\n"
         count += 1
-    currentpage += 1
+    currentpage = 1 + 1
     fld_msg = f"Your provided Pixl.is link is of Folder and I've Found {count - 1} files in the folder.\n"
     fld_link = f"\nFolder Link: {url}\n"
-    final_msg = fld_link + "\n" + fld_msg + "\n" + dl_msg
-    return final_msg
+    return fld_link + "\n" + fld_msg + "\n" + dl_msg
 
 
 ############################################################
@@ -1167,8 +1141,8 @@ def sh_st_bypass(url):
 def gofile_dl(url,password=""):
     api_uri = 'https://api.gofile.io'
     client = requests.Session()
-    res = client.get(api_uri+'/createAccount').json()
-    
+    res = client.get(f'{api_uri}/createAccount').json()
+
     data = {
         'contentId': url.split('/')[-1],
         'token': res['data']['token'],
@@ -1176,12 +1150,9 @@ def gofile_dl(url,password=""):
         'cache': 'true',
         'password': hashlib.sha256(password.encode('utf-8')).hexdigest()
     }
-    res = client.get(api_uri+'/getContent', params=data).json()
+    res = client.get(f'{api_uri}/getContent', params=data).json()
 
-    content = []
-    for item in res['data']['contents'].values():
-        content.append(item)
-    
+    content = list(res['data']['contents'].values())
     return {
         'accountToken': data['token'],
         'files': content
@@ -1193,10 +1164,7 @@ def gofile_dl(url,password=""):
 
 def parse_info_sharer(res):
     f = re.findall(">(.*?)<\/td>", res.text)
-    info_parsed = {}
-    for i in range(0, len(f), 3):
-        info_parsed[f[i].lower().replace(' ', '_')] = f[i+2]
-    return info_parsed
+    return {f[i].lower().replace(' ', '_'): f[i+2] for i in range(0, len(f), 3)}
 
 def sharer_pw(url,Laravel_Session, XSRF_TOKEN, forced_login=False):
     client = cloudscraper.create_scraper(allow_brotli=False)
@@ -1224,13 +1192,13 @@ def sharer_pw(url,Laravel_Session, XSRF_TOKEN, forced_login=False):
     if not forced_login:
         data['nl'] = 1
     try: 
-        res = client.post(url+'/dl', headers=headers, data=data).json()
+        res = client.post(f'{url}/dl', headers=headers, data=data).json()
     except:
         return info_parsed
     if 'url' in res and res['url']:
         info_parsed['error'] = False
         info_parsed['gdrive_link'] = res['url']
-    if len(ddl_btn) and not forced_login and not 'url' in info_parsed:
+    if len(ddl_btn) and not forced_login and 'url' not in info_parsed:
         # retry download via login
         return sharer_pw(url,Laravel_Session, XSRF_TOKEN, forced_login=True)
     return info_parsed["gdrive_link"]
@@ -1333,7 +1301,9 @@ def gplinks(url: str):
     data = { input.get('name'): input.get('value') for input in inputs }
     time.sleep(10)
     headers={"x-requested-with": "XMLHttpRequest"}
-    bypassed_url = client.post(domain+"links/go", data=data, headers=headers).json()["url"]
+    bypassed_url = client.post(
+        f"{domain}links/go", data=data, headers=headers
+    ).json()["url"]
     try: return bypassed_url
     except: return 'Something went wrong :('
 
@@ -1344,7 +1314,7 @@ def gplinks(url: str):
 def droplink(url):
     client = cloudscraper.create_scraper(allow_brotli=False)
     res = client.get(url, timeout=5)
-    
+
     ref = re.findall("action[ ]{0,}=[ ]{0,}['|\"](.*?)['|\"]", res.text)[0]
     h = {"referer": ref}
     res = client.get(url, headers=h)
@@ -1356,14 +1326,13 @@ def droplink(url):
             "content-type": "application/x-www-form-urlencoded",
             "x-requested-with": "XMLHttpRequest",
         }
-    
+
     p = urlparse(url)
     final_url = f"{p.scheme}://{p.netloc}/links/go"
     time.sleep(3.1)
     res = client.post(final_url, data=data, headers=h).json()
 
-    if res["status"] == "success": return res["url"]
-    return 'Something went wrong :('
+    return res["url"] if res["status"] == "success" else 'Something went wrong :('
 
 
 #####################################################################################################################
@@ -1372,8 +1341,7 @@ def droplink(url):
 def linkvertise(url):
     params = {'url': url,}
     response = requests.get('https://bypass.pm/bypass2', params=params).json()
-    if response["success"]: return response["destination"]
-    else: return response["msg"]
+    return response["destination"] if response["success"] else response["msg"]
 
 
 ###################################################################################################################
@@ -1395,15 +1363,16 @@ def RecaptchaV3():
     client = requests.Session()
     client.headers.update({'content-type': 'application/x-www-form-urlencoded'})
     matches = re.findall('([api2|enterprise]+)\/anchor\?(.*)', ANCHOR_URL)[0]
-    url_base += matches[0]+'/'
+    url_base += f'{matches[0]}/'
     params = matches[1]
-    res = client.get(url_base+'anchor', params=params)
+    res = client.get(f'{url_base}anchor', params=params)
     token = re.findall(r'"recaptcha-token" value="(.*?)"', res.text)[0]
     params = dict(pair.split('=') for pair in params.split('&'))
     post_data = post_data.format(params["v"], token, params["k"], params["co"])
-    res = client.post(url_base+'reload', params=f'k={params["k"]}', data=post_data)
-    answer = re.findall(r'"rresp","(.*?)"', res.text)[0]    
-    return answer
+    res = client.post(
+        f'{url_base}reload', params=f'k={params["k"]}', data=post_data
+    )
+    return re.findall(r'"rresp","(.*?)"', res.text)[0]
 
 
 # code from https://github.com/xcscxr/ouo-bypass/
