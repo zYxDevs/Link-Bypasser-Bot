@@ -18,9 +18,7 @@ def store_shortened_links(link):
 
 
 def loop_thread(url):
-    urls = []
-    urls.append(url)
-
+    urls = [url]
     if not url:
         return None
 
@@ -33,17 +31,16 @@ def loop_thread(url):
             try:
                 temp = bypasser.ddl.direct_link_generator(ele)
             except Exception as e:
-                temp = "**Error**: " + str(e)
+                temp = f"**Error**: {str(e)}"
         elif freewall.pass_paywall(ele, check=True):
-            freefile = freewall.pass_paywall(ele)
-            if freefile:
+            if freefile := freewall.pass_paywall(ele):
                 try: return send_file(freefile)
                 except: pass
         else:
             try:
                 temp = bypasser.shortners(ele)
             except Exception as e:
-                temp = "**Error**: " + str(e)
+                temp = f"**Error**: {str(e)}"
         print("bypassed:", temp)
         if temp:
             link = link + temp + "\n\n"
@@ -57,20 +54,16 @@ def index():
         url = request.form.get("url")
         result = loop_thread(url)
         if freewall.pass_paywall(url, check=True): return result
-        
-        shortened_links = request.cookies.get('shortened_links')
-        if shortened_links:
-            prev_links = shortened_links.split(',')
-        else:
-            prev_links = []
 
+        shortened_links = request.cookies.get('shortened_links')
+        prev_links = shortened_links.split(',') if shortened_links else []
         if result:
             prev_links.append(result)
-           
+
             if len(prev_links) > 10: 
                 prev_links = prev_links[-10:]  
 
-        shortened_links_str = ','.join(prev_links)        
+        shortened_links_str = ','.join(prev_links)
         resp = make_response(render_template("index.html", result=result, prev_links=prev_links))
         resp.set_cookie('shortened_links', shortened_links_str)
 

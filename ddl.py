@@ -20,10 +20,7 @@ def getenv(var): return environ.get(var) or DATA.get(var, None)
 
 UPTOBOX_TOKEN = getenv("UPTOBOX_TOKEN")
 ndus = getenv("TERA_COOKIE")
-if ndus is None: TERA_COOKIE = None
-else: TERA_COOKIE = {"ndus": ndus}
-
-
+TERA_COOKIE = None if ndus is None else {"ndus": ndus}
 ddllist = ['1drv.ms','1fichier.com','4funbox','akmfiles','anonfiles.com','antfiles.com','bayfiles.com','disk.yandex.com',
 		   'fcdn.stream','femax20.com','fembed.com','fembed.net','feurl.com','filechan.org','filepress','github.com','hotfile.io',
 		   'hxfile.co','krakenfiles.com','layarkacaxxi.icu','letsupload.cc','letsupload.io','linkbox','lolabits.se','mdisk.me',
@@ -166,8 +163,8 @@ def uptobox(url: str) -> str:
 		link = findall(r'\bhttps?://.*uptobox\.com\S+', url)[0]
 	except IndexError:
 		return ("No Uptobox links found")
-	link = findall(r'\bhttps?://.*\.uptobox\.com/dl\S+', url)
-	if link: return link[0]
+	if link := findall(r'\bhttps?://.*\.uptobox\.com/dl\S+', url):
+		return link[0]
 	cget = create_scraper().request
 	try:
 		file_id = findall(r'\bhttps?://.*uptobox\.com/(\w+)', url)[0]
@@ -197,17 +194,22 @@ def uptobox(url: str) -> str:
 
 
 def mediafire(url: str) -> str:
-	final_link = findall(r'https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+', url)
-	if final_link: return final_link[0]
+	if final_link := findall(
+		r'https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+', url
+	):
+		return final_link[0]
 	cget = create_scraper().request
 	try:
 		url = cget('get', url).url
 		page = cget('get', url).text
 	except Exception as e:
 		return (f"ERROR: {e.__class__.__name__}")
-	final_link = findall(r"\'(https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+)\'", page)
-	if not final_link:return ("ERROR: No links found in this page")
-	return final_link[0]
+	if final_link := findall(
+		r"\'(https?:\/\/download\d+\.mediafire\.com\/\S+\/\S+\/\S+)\'", page
+	):
+		return final_link[0]
+	else:
+		return ("ERROR: No links found in this page")
 
 
 def osdn(url: str) -> str:
@@ -282,8 +284,8 @@ def letsupload(url: str) -> str:
 		res = cget("POST", url)
 	except Exception as e:
 		return (f'ERROR: {e.__class__.__name__}')
-	direct_link = findall(r"(https?://letsupload\.io\/.+?)\'", res.text)
-	if direct_link: return direct_link[0]
+	if direct_link := findall(r"(https?://letsupload\.io\/.+?)\'", res.text):
+		if direct_link: return direct_link[0]
 	else:
 		return ('ERROR: Direct Link not found')
 
@@ -294,8 +296,8 @@ def anonfilesBased(url: str) -> str:
 		soup = BeautifulSoup(cget('get', url).content, 'lxml')
 	except Exception as e:
 		return (f"ERROR: {e.__class__.__name__}")
-	sa = soup.find(id="download-url")
-	if sa: return sa['href']
+	if sa := soup.find(id="download-url"):
+		return sa['href']
 	return ("ERROR: File not found!")
 
 
@@ -307,8 +309,7 @@ def fembed(link: str) -> str:
 		api = search(r"(/api/source/[^\"']+)", raw.text)
 		if api is not None:
 			result = {}
-			raw = sess.post(
-				"https://layarkacaxxi.icu" + api.group(1)).json()
+			raw = sess.post(f"https://layarkacaxxi.icu{api.group(1)}").json()
 			for d in raw["data"]:
 				f = d["file"]
 				head = sess.head(f)
@@ -407,7 +408,7 @@ def streamtape(url: str) -> str:
 	response = get(url)
 
 	if (videolink := findall(r"document.*((?=id\=)[^\"']+)", response.text)):
-		nexturl = "https://streamtape.com/get_video?" + videolink[-1]
+		nexturl = f"https://streamtape.com/get_video?{videolink[-1]}"
 		try: return nexturl
 		except Exception as e: return (f"ERROR: {e.__class__.__name__}")
 
@@ -426,8 +427,9 @@ def racaty(url: str) -> str:
 	except Exception as e:
 		return (f'ERROR: {e.__class__.__name__}')
 	html_tree = etree.HTML(res.text)
-	direct_link = html_tree.xpath("//a[contains(@id,'uniqueExpirylink')]/@href")
-	if direct_link:
+	if direct_link := html_tree.xpath(
+		"//a[contains(@id,'uniqueExpirylink')]/@href"
+	):
 		return direct_link[0]
 	else:
 		return ('ERROR: Direct link not found')
@@ -462,16 +464,16 @@ def fichier(link: str) -> str:
 			"ERROR: File not found/The link you entered is wrong!")
 	soup = BeautifulSoup(req.content, 'lxml')
 	if soup.find("a", {"class": "ok btn-general btn-orange"}):
-		dl_url = soup.find("a", {"class": "ok btn-general btn-orange"})["href"]
-		if dl_url: return dl_url
+		if dl_url := soup.find("a", {"class": "ok btn-general btn-orange"})["href"]:
+			return dl_url
 		return (
 			"ERROR: Unable to generate Direct Link 1fichier!")
 	elif len(soup.find_all("div", {"class": "ct_warn"})) == 3:
 		str_2 = soup.find_all("div", {"class": "ct_warn"})[-1]
 		if "you must wait" in str(str_2).lower():
-			numbers = [int(word) for word in str(str_2).split() if word.isdigit()]
-			if numbers:  return (
-					f"ERROR: 1fichier is on a limit. Please wait {numbers[0]} minute.")
+			if numbers := [int(word) for word in str(str_2).split() if word.isdigit()]:
+				if numbers:  return (
+						f"ERROR: 1fichier is on a limit. Please wait {numbers[0]} minute.")
 			else:
 				return (
 					"ERROR: 1fichier is on a limit. Please wait a few minutes/hour.")
@@ -485,9 +487,9 @@ def fichier(link: str) -> str:
 		str_1 = soup.find_all("div", {"class": "ct_warn"})[-2]
 		str_3 = soup.find_all("div", {"class": "ct_warn"})[-1]
 		if "you must wait" in str(str_1).lower():
-			numbers = [int(word) for word in str(str_1).split() if word.isdigit()]
-			if numbers: return (
-					f"ERROR: 1fichier is on a limit. Please wait {numbers[0]} minute.")
+			if numbers := [int(word) for word in str(str_1).split() if word.isdigit()]:
+				if numbers: return (
+						f"ERROR: 1fichier is on a limit. Please wait {numbers[0]} minute.")
 			else:
 				return (
 					"ERROR: 1fichier is on a limit. Please wait a few minutes/hour.")
@@ -756,8 +758,9 @@ def akmfiles(url):
 	except Exception as e:
 		return (f'ERROR: {e.__class__.__name__}')
 	html_tree = etree.HTML(res.content)
-	direct_link = html_tree.xpath("//a[contains(@class,'btn btn-dow')]/@href")
-	if direct_link:
+	if direct_link := html_tree.xpath(
+		"//a[contains(@class,'btn btn-dow')]/@href"
+	):
 		return direct_link[0]
 	else:
 		return ('ERROR: Direct link not found')
